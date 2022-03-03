@@ -4,6 +4,7 @@
     package="com.bipulhstu.programminghero">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:configChanges="fontScale"
@@ -21,7 +22,10 @@
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:icon">
         <activity
-            android:name=".MainActivity"
+            android:name=".view.QuestionsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -15,6 +15,7 @@ import com.bipulhstu.programminghero.model.Question
 import com.bipulhstu.programminghero.model.QuestionListResponse
 import com.bipulhstu.programminghero.retrofit.ApiConfig
 import com.bipulhstu.programminghero.retrofit.ClientInstance
+import com.bipulhstu.programminghero.utils.SharedPreferenceInfo
 import com.squareup.picasso.Picasso
 import retrofit2.Call
 import retrofit2.Callback
@@ -25,6 +26,7 @@ class QuestionsActivity : AppCompatActivity() {
     lateinit var questionList: List<Question>
     private lateinit var question: Question
     private lateinit var countDownTimer: CountDownTimer
+    private lateinit var preferenceInfo: SharedPreferenceInfo
     var progressCount = 0
     var index = 0
     var currentQuestion = 0
@@ -35,22 +37,11 @@ class QuestionsActivity : AppCompatActivity() {
         binding = ActivityQuestionsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        preferenceInfo = SharedPreferenceInfo(this)
+
         getQuestionList()
 
-        countDownTimer = object : CountDownTimer(10000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                progressCount++
-                //binding.progressBar.setProgress(progressCount)
-            }
-
-            override fun onFinish() {
-                //Toast.makeText(this@QuestionsActivity, "Working", Toast.LENGTH_SHORT).show()
-
-                index++
-                currentQuestion = index+1
-                if(index < questionList.size) setQuestion(questionList[index])
-            }
-        }
+        initializeCountDownTimer()
 
         binding.optionAButton.setOnClickListener {
             checkAnswer(binding.optionAButton, "A")
@@ -71,7 +62,8 @@ class QuestionsActivity : AppCompatActivity() {
         disableOption()
         if (question.correctAnswer == selectedAnswer) {
             selectedOption.setBackgroundResource(R.drawable.right_answer_bg)
-            gainedScore += gainedScore + questionList[index].score
+            gainedScore += question.score
+            binding.score.text = "Score: $gainedScore"
         } else {
             binding.optionAButton.setBackgroundResource(if ("A" == question.correctAnswer) R.drawable.right_answer_bg else R.drawable.start_button_bg)
             binding.optionBButton.setBackgroundResource(if ("B" == question.correctAnswer) R.drawable.right_answer_bg else R.drawable.start_button_bg)
@@ -83,6 +75,10 @@ class QuestionsActivity : AppCompatActivity() {
             index++
             currentQuestion = index+1
             if(index < questionList.size) setQuestion(questionList[index])
+            else{
+                preferenceInfo.storePoint(gainedScore, "point")
+                finish()
+            }
         }, 2000)
     }
 
@@ -161,5 +157,25 @@ class QuestionsActivity : AppCompatActivity() {
         binding.optionBButton.isEnabled = false
         binding.optionCButton.isEnabled = false
         binding.optionDButton.isEnabled = false
+    }
+
+    private fun initializeCountDownTimer() {
+        countDownTimer = object : CountDownTimer(10000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                progressCount++
+                //binding.progressBar.setProgress(progressCount)
+            }
+
+            override fun onFinish() {
+                //Toast.makeText(this@QuestionsActivity, "Working", Toast.LENGTH_SHORT).show()
+                index++
+                currentQuestion = index+1
+                if(index < questionList.size) setQuestion(questionList[index])
+                else{
+                    preferenceInfo.storePoint(gainedScore, "point")
+                    finish()
+                }
+            }
+        }
     }
 }

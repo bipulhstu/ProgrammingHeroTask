@@ -1,43 +1,51 @@
 package com.bipulhstu.programminghero.view
 
 import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
-import android.util.Log
 import android.view.View
-import android.widget.Toast
+import androidx.annotation.Nullable
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.ViewModelProvider
 import com.bipulhstu.programminghero.R
 import com.bipulhstu.programminghero.databinding.ActivityQuestionsBinding
 import com.bipulhstu.programminghero.model.Question
-import com.bipulhstu.programminghero.model.QuestionListResponse
-import com.bipulhstu.programminghero.retrofit.ApiConfig
-import com.bipulhstu.programminghero.retrofit.ClientInstance
 import com.bipulhstu.programminghero.utils.SharedPreferenceInfo
+import com.bipulhstu.programminghero.viewmodel.QuestionViewModel
 import com.squareup.picasso.Picasso
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+
 
 class QuestionsActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityQuestionsBinding
-    lateinit var questionList: List<Question>
-    private lateinit var question: Question
-    private lateinit var countDownTimer: CountDownTimer
     private lateinit var preferenceInfo: SharedPreferenceInfo
-    var progressCount = 0
-    var index = 0
+    private lateinit var binding: ActivityQuestionsBinding
+    private lateinit var countDownTimer: CountDownTimer
+    private lateinit var progressDialog: ProgressDialog
+    lateinit var questionList: List<Question>
+    lateinit var questionViewModel: QuestionViewModel
+    private lateinit var question: Question
     var currentQuestion = 0
+    var progressCount = 0
     var gainedScore = 0
+    var index = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityQuestionsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        questionViewModel = ViewModelProvider(this).get(QuestionViewModel::class.java)
         preferenceInfo = SharedPreferenceInfo(this)
+        progressDialog = ProgressDialog(this)
+        progressDialog.setCancelable(false)
+
+
+        progressDialog.show()
+        progressDialog.setContentView(R.layout.custom_loading_dialog)
+        progressDialog.window!!.setBackgroundDrawableResource(android.R.color.transparent)
+
 
         getQuestionList()
 
@@ -72,39 +80,25 @@ class QuestionsActivity : AppCompatActivity() {
             selectedOption.setBackgroundResource(R.drawable.wrong_answer_bg)
         }
         Handler().postDelayed({
-            index++
-            currentQuestion = index+1
-            if(index < questionList.size) setQuestion(questionList[index])
-            else{
-                val previousHighScore = preferenceInfo.getPoint("high_score")
-                val highScore = if(preferenceInfo.getPoint("high_score") <= gainedScore) gainedScore else previousHighScore
-                preferenceInfo.storePoint( highScore, "high_score")
-                finish()
-            }
+            getNextQuestion()
         }, 2000)
     }
 
-    private fun getQuestionList() {
-        val config = ClientInstance().getRetrofitInstance()!!.create(ApiConfig::class.java)
-        val call: Call<QuestionListResponse> = config.getQuestionList()
-        call.enqueue(object : Callback<QuestionListResponse> {
-            override fun onResponse(
-                call: Call<QuestionListResponse>,
-                response: Response<QuestionListResponse>
-            ) {
-                if (response.isSuccessful) {
-                    questionList = response.body()!!.questions
-                    //shuffle(questionList)
-                    currentQuestion = index+1
-                    binding.progressBar.visibility = View.VISIBLE
-                    setQuestion(questionList[index])
-                }
-            }
 
-            override fun onFailure(call: Call<QuestionListResponse>, t: Throwable) {
-                Log.d("error", t.message!!)
+    private fun getQuestionList() {
+        questionViewModel.getQuestions()?.observe(this) {
+
+            fun onChanged(@Nullable questions: List<Question>) {
+                questionList = questions
+                //shuffle(questionList)
+                currentQuestion = index + 1
+                binding.progressBar.visibility = View.VISIBLE
+                setQuestion(questionList[index])
+
+                progressDialog.dismiss()
             }
-        })
+            onChanged(it)
+        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -115,20 +109,22 @@ class QuestionsActivity : AppCompatActivity() {
         binding.questionPoint.text = question.score.toString() + " Point"
         binding.mainQuestion.text = question.question
 
-
-            binding.questionImage.visibility =if (question.questionImageUrl == null) View.INVISIBLE else View.VISIBLE
-            Picasso.with(this).load(question.questionImageUrl).into(binding.questionImage)
-
+        binding.questionImage.visibility = if (question.questionImageUrl == null) View.INVISIBLE else View.VISIBLE
+        Picasso.with(this).load(question.questionImageUrl).into(binding.questionImage)
 
         binding.optionA.text = question.answers.A
         binding.optionB.text = question.answers.B
         binding.optionC.text = question.answers.C
         binding.optionD.text = question.answers.D
 
-         binding.optionAButton.visibility = if(binding.optionA.text.toString().isEmpty()) View.GONE else View.VISIBLE
-         binding.optionBButton.visibility = if(binding.optionB.text.toString().isEmpty()) View.GONE else View.VISIBLE
-         binding.optionCButton.visibility = if(binding.optionC.text.toString().isEmpty()) View.GONE else View.VISIBLE
-         binding.optionDButton.visibility = if(binding.optionD.text.toString().isEmpty()) View.GONE else View.VISIBLE
+        binding.optionAButton.visibility =
+            if (binding.optionA.text.toString().isEmpty()) View.GONE else View.VISIBLE
+        binding.optionBButton.visibility =
+            if (binding.optionB.text.toString().isEmpty()) View.GONE else View.VISIBLE
+        binding.optionCButton.visibility =
+            if (binding.optionC.text.toString().isEmpty()) View.GONE else View.VISIBLE
+        binding.optionDButton.visibility =
+            if (binding.optionD.text.toString().isEmpty()) View.GONE else View.VISIBLE
 
         countDownTimer.cancel()
         countDownTimer.start()
@@ -137,7 +133,6 @@ class QuestionsActivity : AppCompatActivity() {
         resetColor()
         enableOption()
     }
-
 
 
     private fun resetColor() {
@@ -170,16 +165,22 @@ class QuestionsActivity : AppCompatActivity() {
 
             override fun onFinish() {
                 //Toast.makeText(this@QuestionsActivity, "Working", Toast.LENGTH_SHORT).show()
-                index++
-                currentQuestion = index+1
-                if(index < questionList.size) setQuestion(questionList[index])
-                else{
-                    val previousHighScore = preferenceInfo.getPoint("high_score")
-                    val highScore = if(preferenceInfo.getPoint("high_score") <= gainedScore) gainedScore else previousHighScore
-                    preferenceInfo.storePoint( highScore, "high_score")
-                    finish()
-                }
+                getNextQuestion()
             }
         }
     }
+
+    private fun getNextQuestion() {
+        index++
+        currentQuestion = index + 1
+        if (index < questionList.size) setQuestion(questionList[index])
+        else {
+            val previousHighScore = preferenceInfo.getPoint("high_score")
+            val highScore =
+                if (preferenceInfo.getPoint("high_score") <= gainedScore) gainedScore else previousHighScore
+            preferenceInfo.storePoint(highScore, "high_score")
+            finish()
+        }
+    }
+
 }

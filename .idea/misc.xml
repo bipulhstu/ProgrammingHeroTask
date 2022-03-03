@@ -4,10 +4,13 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/right_answer_bg.xml" value="0.1975" />
+        <entry key="app/src/main/res/drawable/round.xml" value="0.1515" />
+        <entry key="app/src/main/res/drawable/round_bg.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/start_button_bg.xml" value="0.1975" />
         <entry key="app/src/main/res/drawable/wrong_answer_bg.xml" value="0.1975" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.16785714285714284" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.2" />
         <entry key="app/src/main/res/layout/activity_questions.xml" value="0.20986842105263157" />
+        <entry key="app/src/main/res/layout/custom_loading_dialog.xml" value="0.20986842105263157" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.173" />
       </map>
     </option>

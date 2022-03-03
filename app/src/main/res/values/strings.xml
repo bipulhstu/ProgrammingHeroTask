@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ProgrammingHeroTask</string>
+    <string name="quiz">Quiz</string>
+    <string name="highscore">Highscore</string>
 </resources>

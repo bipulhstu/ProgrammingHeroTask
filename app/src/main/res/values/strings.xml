@@ -2,6 +2,6 @@
     <string name="app_name">ProgrammingHeroTask</string>
     <string name="quiz">Quiz</string>
     <string name="high_score">Highscore</string>
-    <string name="zero_point">0 Point</string>
+    <string name="point">Point</string>
     <string name="start">Start</string>
 </resources>

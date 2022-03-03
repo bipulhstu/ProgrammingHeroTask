@@ -2,12 +2,16 @@ package com.bipulhstu.programminghero.view
 
 import android.annotation.SuppressLint
 import android.app.ProgressDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
+import android.text.Html
 import android.view.View
+import android.view.animation.AnimationUtils
+import android.view.animation.TranslateAnimation
 import androidx.annotation.Nullable
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import com.bipulhstu.programminghero.R
@@ -26,6 +30,9 @@ class QuestionsActivity : AppCompatActivity() {
     lateinit var questionList: List<Question>
     lateinit var questionViewModel: QuestionViewModel
     private lateinit var question: Question
+    private val DELAY_TIME = 2000L //2s
+    private val DURATION = 10000L //10s
+    private val INTERVAL = 1000L //1s
     var currentQuestion = 0
     var progressCount = 0
     var gainedScore = 0
@@ -79,15 +86,16 @@ class QuestionsActivity : AppCompatActivity() {
             binding.optionDButton.setBackgroundResource(if ("D" == question.correctAnswer) R.drawable.right_answer_bg else R.drawable.start_button_bg)
             selectedOption.setBackgroundResource(R.drawable.wrong_answer_bg)
         }
+        //delay 2s
         Handler().postDelayed({
             getNextQuestion()
-        }, 2000)
+        }, DELAY_TIME)
     }
 
 
+    //get all the questions from repository
     private fun getQuestionList() {
         questionViewModel.getQuestions()?.observe(this) {
-
             fun onChanged(@Nullable questions: List<Question>) {
                 questionList = questions
                 //shuffle(questionList)
@@ -107,7 +115,10 @@ class QuestionsActivity : AppCompatActivity() {
         binding.questionCount.text = "Question: $currentQuestion/" + questionList.size
         binding.score.text = "Score: $gainedScore"
         binding.questionPoint.text = question.score.toString() + " Point"
-        binding.mainQuestion.text = question.question
+        //binding.mainQuestion.text = question.question
+
+        binding.mainQuestion.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { Html.fromHtml(question.question, Html.FROM_HTML_MODE_COMPACT)
+        } else { Html.fromHtml(question.question) }
 
         binding.questionImage.visibility = if (question.questionImageUrl == null) View.INVISIBLE else View.VISIBLE
         Picasso.with(this).load(question.questionImageUrl).into(binding.questionImage)
@@ -126,6 +137,7 @@ class QuestionsActivity : AppCompatActivity() {
         binding.optionDButton.visibility =
             if (binding.optionD.text.toString().isEmpty()) View.GONE else View.VISIBLE
 
+        setAnimation(binding.optionsCl)
         countDownTimer.cancel()
         countDownTimer.start()
         progressCount = 0
@@ -157,7 +169,7 @@ class QuestionsActivity : AppCompatActivity() {
     }
 
     private fun initializeCountDownTimer() {
-        countDownTimer = object : CountDownTimer(10000, 1000) {
+        countDownTimer = object : CountDownTimer(DURATION, INTERVAL) {
             override fun onTick(millisUntilFinished: Long) {
                 progressCount++
                 //binding.progressBar.setProgress(progressCount)
@@ -183,4 +195,13 @@ class QuestionsActivity : AppCompatActivity() {
         }
     }
 
+    private fun setAnimation(view: View) {
+        val animate = TranslateAnimation(0F, 0F, view.height.toFloat(), 0F)
+        animate.duration = 300
+        animate.fillAfter = true
+        view.startAnimation(animate)
+
+        val animation = AnimationUtils.loadAnimation(this, R.anim.text_animation)
+        binding.mainQuestion.startAnimation(animation)
+    }
 }

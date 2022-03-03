@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
 
         preferenceInfo = SharedPreferenceInfo(this)
 
-        binding.point.text = preferenceInfo.getPoint("point").toString()+ " Point"
+        binding.point.text = preferenceInfo.getPoint("high_score").toString()+ " Point"
 
         binding.startButton.setOnClickListener {
             val intent = Intent(this@MainActivity, QuestionsActivity::class.java)
@@ -31,6 +31,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        binding.point.text = preferenceInfo.getPoint("point").toString()+ " Point"
+        binding.point.text = preferenceInfo.getPoint("high_score").toString()+ " Point"
     }
 }

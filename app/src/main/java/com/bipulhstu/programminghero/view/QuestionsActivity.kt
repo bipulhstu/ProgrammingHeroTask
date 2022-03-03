@@ -76,7 +76,9 @@ class QuestionsActivity : AppCompatActivity() {
             currentQuestion = index+1
             if(index < questionList.size) setQuestion(questionList[index])
             else{
-                preferenceInfo.storePoint(gainedScore, "point")
+                val previousHighScore = preferenceInfo.getPoint("high_score")
+                val highScore = if(preferenceInfo.getPoint("high_score") <= gainedScore) gainedScore else previousHighScore
+                preferenceInfo.storePoint( highScore, "high_score")
                 finish()
             }
         }, 2000)
@@ -172,7 +174,9 @@ class QuestionsActivity : AppCompatActivity() {
                 currentQuestion = index+1
                 if(index < questionList.size) setQuestion(questionList[index])
                 else{
-                    preferenceInfo.storePoint(gainedScore, "point")
+                    val previousHighScore = preferenceInfo.getPoint("high_score")
+                    val highScore = if(preferenceInfo.getPoint("high_score") <= gainedScore) gainedScore else previousHighScore
+                    preferenceInfo.storePoint( highScore, "high_score")
                     finish()
                 }
             }
